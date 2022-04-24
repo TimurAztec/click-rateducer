@@ -3,8 +3,6 @@
 #include <windows.h>
 #include <stdbool.h>
 
-#define VK_LBUTTON_PRESSED_AFTER_PRESSED -128
-#define VK_LBUTTON_PRESSED_AFTER_UNPRESSED -127
 #define ARRAYSIZE(a) \
   ((sizeof(a) / sizeof(*(a))) / \
   (size_t)(!(sizeof(a) % sizeof(*(a)))))
