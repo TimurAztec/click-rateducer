@@ -3,42 +3,49 @@
 #include <windows.h>
 #include <stdbool.h>
 
-#define VK_LBUTTON_PRESSED_AFTER_PRESSED -127
-#define VK_LBUTTON_PRESSED_AFTER_UNPRESSED -128
+#define VK_LBUTTON_PRESSED_AFTER_PRESSED -128
+#define VK_LBUTTON_PRESSED_AFTER_UNPRESSED -127
 #define ARRAYSIZE(a) \
   ((sizeof(a) / sizeof(*(a))) / \
   (size_t)(!(sizeof(a) % sizeof(*(a)))))
 
+BOOL click_in_progress = false;
+BOOL VK_LBUTTON_PRESSED = false;
+
+DWORD WINAPI ButtonStatusThread(void* value) {
+  while (true) {
+    BOOL key_state = (GetAsyncKeyState(VK_LBUTTON) < 0);
+    if (click_in_progress == false) {
+      VK_LBUTTON_PRESSED = key_state;
+    }
+  }
+}
+
+// // inputs[0].mi.dwFlags = (button_action_code == VK_LBUTTON_PRESSED_AFTER_PRESSED) ? MOUSEEVENTF_LEFTUP : MOUSEEVENTF_LEFTDOWN;
+
 int main(int argc, char* argv[]) {
 
-  BOOL end = false;
+  HANDLE button_status_thread = CreateThread(NULL, 0, ButtonStatusThread, NULL, 0, NULL);
   MSG msg;
   // sets clicks per  minute
-  short int clicks_per_minute = strtol(argv[1], NULL, 10);
+  const short int clicks_per_minute = strtol(argv[1], NULL, 10);
   
   if (clicks_per_minute > 0) {
-    float delay_btw_clicks = 1000*((float)60/clicks_per_minute);
-    float delay_before_up = 100*((float)60/clicks_per_minute);
-
-    while (!end) {
-      Sleep(delay_btw_clicks);
-      short int button_action_code = GetKeyState(VK_LBUTTON);
-      if (button_action_code == VK_LBUTTON_PRESSED_AFTER_PRESSED
-      || button_action_code == VK_LBUTTON_PRESSED_AFTER_UNPRESSED) {
-        INPUT inputs[1] = {};
-        inputs[0].type = INPUT_MOUSE;
-        inputs[0].mi.mouseData = XBUTTON1;
-        inputs[0].mi.dwFlags = MOUSEEVENTF_LEFTUP;
-        // inputs[0].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-        SendInput(ARRAYSIZE(inputs), inputs, sizeof(INPUT));
-        Sleep(delay_before_up);
-        inputs[0].type = INPUT_MOUSE;
-        inputs[0].mi.mouseData = XBUTTON1;
-        // inputs[0].mi.dwFlags = MOUSEEVENTF_LEFTUP;
-        inputs[0].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-        SendInput(ARRAYSIZE(inputs), inputs, sizeof(INPUT));
+    const float delay_btw_clicks = 1000*((float)60/clicks_per_minute);
+    while (true) {      
+      while (VK_LBUTTON_PRESSED && (GetAsyncKeyState(0x5A) >= 0) && click_in_progress == false) {
+        click_in_progress = true;
         
-        printf("Pressed\n");
+        if (VK_LBUTTON_PRESSED) {
+          mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+        }
+
+        if (!VK_LBUTTON_PRESSED) {
+          mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+        }
+
+        click_in_progress = false;
+        Sleep(delay_btw_clicks);
       }
     }
   }
