@@ -36,9 +36,6 @@ int main(int argc, char* argv[]) {
         
         if (VK_LBUTTON_PRESSED) {
           mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-        }
-
-        if (!VK_LBUTTON_PRESSED) {
           mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
         }
 
